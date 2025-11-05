@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const endEl = document.getElementById("endTime");
 
   // session
-  (function restore(){ try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); if (s && s.user) currentUser = s.user; }catch(e){ currentUser = null; } if (currentUser) onLoginSuccess(); else document.getElementById('loginModal').style.display = 'flex'; })();
+  (function restore(){ try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); if (s && s.user) currentUser = s.user; }catch(e){ currentUser = null; } if (currentUser) onLoginSuccess(); else {document.getElementById('loginModal').style.display = 'flex';document.getElementById('loginModal').style.opacity=1; } })();
 
   // login
   loginForm.addEventListener("submit", async (e) => {
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) { loginMsg.textContent = err?.error || 'Login failed'; }
   });
 
-  logoutBtn.addEventListener("click", ()=>{ currentUser = null; localStorage.removeItem(STORAGE_KEY); appEl.style.display='none'; logoutBtn.style.display='none'; currentUserEl.style.display='none'; document.getElementById('loginModal').style.display='flex'; });
+  logoutBtn.addEventListener("click", ()=>{ currentUser = null; localStorage.removeItem(STORAGE_KEY); appEl.style.display='none'; logoutBtn.style.display='none'; currentUserEl.style.display='none'; document.getElementById('loginModal').style.display='flex';  document.getElementById('loginModal').style.opacity=1; });
 
   async function onLoginSuccess(){
     document.getElementById('loginModal').style.display='none'; appEl.style.display = 'block'; logoutBtn.style.display = 'inline-block'; currentUserEl.style.display = 'inline-block';
@@ -253,8 +253,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         filtered.sort((a,b)=> parseHM(a.startTime) - parseHM(b.startTime));
         filtered.forEach(b => {
+          console.log(b,'b')
+          if (document.querySelector(`li[data-id="${b.id}"]`)) {
+            return; // Skip if already rendered
+          }
           const use12 = (settings.timeFormat || '12') === '12';
-          const li = document.createElement('li'); li.className = 'mini-item';
+          const li = document.createElement('li'); li.className = 'mini-item'; li.dataset.id = b.id; // Set booking id to manage duplicates
           if (currentUser.role === 'admin') li.innerHTML = `<div><strong>${b.customerName||'—'}</strong><div class="muted small">${toFriendly(b.startTime,use12)} - ${toFriendly(b.endTime,use12)}</div></div><div><button class="btn" onclick="window.appEditBooking('${b.id}')">Edit</button></div>`;
           else li.innerHTML = `<div><strong>${b.customerName||'—'}</strong><div class="muted small">${toFriendly(b.startTime,use12)} - ${toFriendly(b.endTime,use12)}</div></div>`;
           previewList.appendChild(li);
@@ -679,7 +683,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // initial defaults
   setDefaultTimes();
-  (async function start(){ if (currentUser) { await refreshAll();  attachAutocomplete(); } })();
+  (async function start(){ if (currentUser) { await refreshAll(); renderPreview();  attachAutocomplete(); } })();
 
   // expose functions
   window.appEditBooking = window.appEditBooking; window.appDeleteBooking = window.appDeleteBooking; window.appPromoteReserved = window.appPromoteReserved; window.appChangeStatus = window.appChangeStatus; window.appApproveBooking = window.appApproveBooking; window.appRejectBooking = window.appRejectBooking; window.appRenderUsers = renderUsers;
