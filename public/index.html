@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>The Sports Lounge — Booking (Auth & Restricted)</title>
+<style>
+:root{--navy:#05204a;--accent:#ff8a00;--muted:#6b7b8c;--success:#28a745;--danger:#dc3545}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f1f5f9;color:var(--navy)}
+.topbar{background:var(--navy);color:white;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{font-size:20px;background:white;padding:6px;border-radius:8px}
+.title{font-weight:700;font-size:16px}
+.container{padding:12px;max-width:920px;margin:0 auto}
+.card{background:white;padding:12px;border-radius:12px;margin:12px 0;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+label{display:block;font-size:13px;color:var(--navy);margin-bottom:6px}
+input,select,textarea,button{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;margin-bottom:8px;font-size:14px}
+.row{display:flex;gap:8px}
+.row label{flex:1}
+.btn{background:transparent;border:1px solid var(--navy);padding:8px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btn.ghost{background:transparent;border-color:#dfe7f3;color:var(--navy); margin-left: 6px;}
+.muted{color:var(--muted);font-size:13px}
+.list{padding:8px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:10px;border-radius:10px;border:1px solid #eef6ff;margin-bottom:8px;    box-shadow: 0px 1px 2px 0px #bbb3b3;}
+.mini-list{padding:8px;display:flex;flex-direction:column;gap:6px}
+.mini-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:#fff}
+.day-preview{margin:12px 0}
+.bottombar{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--navy);border-top:1px solid #e6eef6;padding-bottom:6px}
+.navbtn{color:#fff;flex:1;padding:12px;border:0;background:transparent;font-size:14px;cursor:pointer}
+.navbtn.active{color:var(--accent);font-weight:700}
+.settings-icon{position:fixed;right:14px;bottom:64px;background:white;border-radius:50%;padding:10px;box-shadow:0 6px 18px rgba(0,0,0,0.15);cursor:pointer;z-index:50}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);min-width:260px;padding:12px;border-radius:8px;color:white;display:none;z-index:60}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
+.close-x{float:right;margin-left:8px;cursor:pointer;font-weight:bold}
+.small{font-size:13px}
+.codebox{font-family:monospace;background:#f7f9fb;padding:8px;border-radius:6px;font-size:13px}
+.locked{background:#f5f7fb}
+.status-icon{display:inline-block;width:20px;text-align:center;font-weight:700}
+.status-icon.confirmed{color:var(--success)}
+.status-icon.pending{color:#d39e00}
+
+/* compact list for users */
+.compact-item{display:flex;align-items:center;justify-content:space-between;padding:6px;border-radius:8px;border:1px solid #eef6ff;margin-bottom:6px;background:white;font-size:13px}
+.compact-left{display:flex;align-items:center;gap:8px;min-width:0}
+.compact-meta{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
+.hidden{display:none !important}
+.small-ghost{background:transparent;border:0;padding:6px 8px;cursor:pointer}
+.admin-actions button{margin-left:6px}
+.muted-center{color:var(--muted);text-align:center;font-size:13px;margin-top:6px}
+.locked{background:#f5f7fb}
+.item div:last-child {
+    display: flex;
+}
+#allList .item:nth-child(odd) {
+  background-color: #ffffff; /* white */
+}
+#allList .item:nth-child(even) {
+  background-color: #cadcff94; /* light gray */
+}
+button.btn.ghost.deletebtn {
+    border: 1px solid darkgoldenrod;
+}
+input#autoSendCheckbox,#showFullyBooked,#sendCredentialsCheckbox {
+    width: auto;
+}
+#settingsIcon {
+    display:none !important;
+}
+input[placeholder="Search name or phone"] {
+    flex: unset !important;
+}
+
+#loginModal {justify-content: center;}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo"><img style="height: 60px;width: 60px;"" src="/public/logo.jpeg" alt="The Sports Lounge Logo" width="200"/>
+  </div><div class="title">The Sports Lounge</div></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div id="currentUser" class="user-badge" style="display:none"></div>
+    <button id="logoutBtn" class="" style="display:none">Logout</button>
+  </div>
+</header>
+
+<!-- LOGIN (forced) -->
+<div id="loginModal" class="modal" aria-hidden="false">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">Sign in</h3>
+    </div>
+
+    <form id="loginForm">
+      <label>Username<input id="loginUser" placeholder="username or phone"></label>
+      <label>Password<input id="loginPass" type="password" placeholder="password"></label>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn primary">Login</button>
+      </div>
+      <div id="loginMsg" class="muted-center"></div>
+    </form>
+
+  </div>
+  
+  
+</div>
+
+<!-- APP (hidden until login) -->
+<div id="app" style="display:none">
+  <div class="container" id="main">
+    <div id="toast" class="toast success"><span id="toastMsg"></span><span id="toastClose" class="close-x">×</span></div>
+
+    <!-- HOME (Add Booking + Day preview) -->
+    <section class="card tab" id="tab-home">
+      <div class="day-preview">
+        <div class="day-title"><strong>Bookings for <span id="previewDate">--</span></strong></div>
+        <ul id="previewList" class="mini-list"></ul>
+      </div>
+
+      <div class="card form-card">
+        <h3 id="formTitle">Request / Add Booking</h3>
+        <form id="bookingForm">
+          <input type="hidden" id="bookingId" value="">
+          <label>Customer name<input id="name" required></label>
+          <label>Phone<input id="phone" type="tel" placeholder="92XXXXXXXXXX"></label>
+          <div class="row">
+            <label>Date<input id="date" type="date" required></label>
+            <label>Payment status
+              <select id="paymentStatus">
+                <option value="Advance">Advance Received</option>
+                <option value="Full">Fully Paid</option>
+                <option value="Unpaid">Unpaid</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Start time<input id="startTime" type="time" step="60" required></label>
+            <label>End time<input id="endTime" type="time" step="60" required></label>
+          </div>
+          <label>Comments<textarea id="comments" rows="2" placeholder="Any notes (e.g. please contact, special request)"></textarea></label>
+          <div class="row">
+            <label>Status
+              <select id="status">
+                <option value="Confirmed">Confirmed</option>
+                <option value="Reserved">Reserved</option>
+                <option value="Pending">Pending</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </label>
+            <label id="advanceField">Advance amount<input id="advance" type="number" min="0" step="0.01" placeholder="0"></label>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+            <div style="flex:1"><button type="button" id="cancelBtn" class="btn ghost">Cancel</button></div>
+            <div style="flex:1"><button type="submit" id="saveBtn" class="btn primary">Save</button></div>
+          </div>
+          <div id="formMsg" class="muted"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ALL -->
+    <section class="card tab" id="tab-all" style="display:none">
+      <h3>All bookings</h3>
+      <div class="row">
+        <label>From<input id="fromDate" type="date"></label>
+        <label>To<input id="toDate" type="date"></label>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px"><button id="filterBtn" class="btn">Filter</button><button id="clearFilterBtn" class="btn ghost">Clear</button></div>
+      <div id="allList" class="list" style="margin-top:10px"></div>
+    </section>
+
+    <!-- APPROVALS (admin only) -->
+    <section class="card tab" id="tab-approvals" style="display:none">
+      <h3>Pending Approvals</h3>
+      <div id="pendingList" class="list"></div>
+    </section>
+
+    <!-- RESERVED -->
+    <section class="card tab" id="tab-reserved" style="display:none">
+      <h3>Reserved / Waitlist</h3>
+      <div id="reservedList" class="list"></div>
+    </section>
+
+    <!-- FREE SLOTS -->
+    <section class="card tab" id="tab-freeslots" style="display:none">
+      <h3>Free Slots Finder</h3>
+      <div class="row">
+        <label>From Date<input id="fs_from" type="date"></label>
+        <label>To Date<input id="fs_to" type="date"></label>
+      </div>
+      <div class="row">
+        <label>From Time<input id="fs_start" type="time" value="18:00"></label>
+        <label>To Time<input id="fs_end" type="time" value="02:00"></label>
+      </div>
+      <label><input type="checkbox" id="showFullyBooked"> Show fully booked days</label>
+      <label>Pre-text (appears before the list)</label>
+      <input id="preText" placeholder="Booking available today at The Sports Lounge:" />
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="findFreeBtn" class="btn">Find Free Slots</button>
+        <button id="copyFreeBtn" class="btn ghost">Copy Text</button>
+        <button id="waFreeBtn" class="btn ghost">Open in WhatsApp</button>
+      </div>
+      <div id="freeResults" style="margin-top:12px"></div>
+    </section>
+
+    <!-- USERS (admin-only) -->
+    <section class="card tab" id="tab-users" style="display:none">
+      <h3>Users (Admin)</h3>
+      <div id="usersContainer"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="card tab" id="tab-settings" style="display:none">
+      <h3>Settings & WhatsApp Template</h3>
+      <p class="muted small">Placeholders: {name}, {date}, {day}, {start}, {end}</p>
+      <label>WhatsApp message template</label>
+      <textarea id="waTemplate" rows="3">Your booking is confirmed for The Sports Lounge on {date} ({day}) from {start} to {end}.</textarea>
+      <label>Default prefix for free slots</label>
+      <input id="defaultPrefix" placeholder="Booking available today at The Sports Lounge:" />
+      <label>Time format</label>
+      <select id="timeFormatSelect">
+        <option value="12">12-hour (AM/PM)</option>
+        <option value="24">24-hour</option>
+      </select>
+      <label>Toast auto-hide time (seconds, 0 = never)</label>
+      <input id="toastTimeout" type="number" min="0" value="5" />
+      <label style="margin-top:6px"><input type="checkbox" id="autoSendCheckbox"> Auto-send WhatsApp on confirm (opens chat and pre-fills message)</label>
+      <label><input type="checkbox" id="sendCredentialsCheckbox" checked> Include login credentials in WhatsApp / copied message</label>
+
+      <div style="margin-top:8px"><button id="saveSettings" class="btn primary">Save Settings</button></div>
+    </section>
+
+  </div>
+
+  <!-- bottom nav -->
+  <nav class="bottombar">
+    <button class="navbtn active" data-tab="home">🏠 Home</button>
+    <button class="navbtn" data-tab="all">📅 All</button>
+    <button class="navbtn" data-tab="approvals" style="display:none">✅ For Approvals</button>
+    <button class="navbtn" data-tab="reserved" style="display:none">🕓 Reserved</button>
+    <button class="navbtn" data-tab="freeslots" style="display:none">🔎 Free Slots</button>
+    <button class="navbtn" data-tab="users" style="display:none">👥 Users</button>
+    <button class="navbtn" data-tab="settings" style="display:none">⚙️ Settings</button>
+  </nav>
+
+  <div class="settings-icon" id="settingsIcon" title="Quick settings">
+    <div style="text-align:center;font-size:12px">⚙️</div>
+    <div id="settingsPopup" style="display:none;width:260px;padding:10px">
+      <label><input type="checkbox" id="timeFormatToggle"> Use 12-hour (AM/PM)</label>
+      <label><input type="checkbox" id="autoSendToggleQuick"> Auto-send WhatsApp on confirm</label>
+      <label class="small" style="display:block;margin-top:6px">Toast auto-hide (seconds)</label>
+      <input id="toastTimeoutQuick" type="number" min="0" value="5" />
+      <div style="margin-top:8px"><button id="applyQuick" class="btn">Apply</button></div>
+    </div>
+  </div>
+
+</div>
+
+
+<script src="script.js"></script>
+</body></html>
