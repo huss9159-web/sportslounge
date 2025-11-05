@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // initial defaults
   setDefaultTimes();
-  (async function start(){ if (currentUser) { await refreshAll(); renderPreview(); attachAutocomplete(); } })();
+  (async function start(){ if (currentUser) { await refreshAll();  attachAutocomplete(); } })();
 
   // expose functions
   window.appEditBooking = window.appEditBooking; window.appDeleteBooking = window.appDeleteBooking; window.appPromoteReserved = window.appPromoteReserved; window.appChangeStatus = window.appChangeStatus; window.appApproveBooking = window.appApproveBooking; window.appRejectBooking = window.appRejectBooking; window.appRenderUsers = renderUsers;
